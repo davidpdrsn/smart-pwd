@@ -1,7 +1,7 @@
 #![allow(clippy::redundant_closure)]
 
-use itertools::{Itertools, Position};
 use dirs::home_dir;
+use itertools::{Itertools, Position};
 use std::env;
 use std::path::Path;
 
@@ -15,7 +15,7 @@ fn main() -> Result<()> {
 
     let home_pos = ancestors
         .iter()
-        .position(|&i| i==home_dir().unwrap().as_path());
+        .position(|&i| i == home_dir().unwrap().as_path());
 
     if let Some(t) = home_pos {
         ancestors.drain(0..t);
@@ -26,9 +26,9 @@ fn main() -> Result<()> {
     for pos in ancestors.iter().with_position() {
         // println!("{:?}", pos);
         match pos {
-            Position::First(_)  => print!("/"),
+            Position::First(_) => print!("/"),
             Position::Only(_) => {
-                if !home_pos.is_some() {
+                if home_pos.is_none() {
                     print!("/");
                 }
             }
@@ -44,12 +44,12 @@ fn main() -> Result<()> {
                         print!("{}", path_file_name_to_string(inner).unwrap());
                     }
                     Position::Only(_) => {
-                        if !home_pos.is_some() {
+                        if home_pos.is_none() {
                             print!("{}", path_file_name_to_string(inner).unwrap());
                         }
                     }
                     Position::First(_) => {
-                        if !home_pos.is_some() {
+                        if home_pos.is_none() {
                             let name = shortest_unique_path_prefix(inner);
                             print!("{}", name);
                         }
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
 
         match pos {
             Position::Middle(_) => print!("/"),
-            _ => {}
+            Position::First(_) | Position::Last(_) | Position::Only(_) => {}
         }
     }
 
@@ -101,11 +101,7 @@ fn path_file_name_to_string(path: &Path) -> Option<String> {
 fn shortest_unique_prefix<'a, S: AsRef<str>>(name: &'a str, others: &[S]) -> &'a str {
     for n in 0..name.len() {
         let sub = &name[0..n];
-        if others
-            .iter()
-            .find(|other| other.as_ref().starts_with(sub))
-            .is_none()
-        {
+        if !others.iter().any(|other| other.as_ref().starts_with(sub)) {
             return sub;
         }
     }
@@ -123,6 +119,6 @@ mod test {
         let name = "minor";
         let dirs = vec!["archive", "bin", "major", "reference"];
 
-        assert_eq!("mi", shortest_unique_prefix(&name, &dirs));
+        assert_eq!("mi", shortest_unique_prefix(name, &dirs));
     }
 }
